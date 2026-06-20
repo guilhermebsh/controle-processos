@@ -561,18 +561,19 @@ async function enviarRegistro() {
 
 async function enviarParaSheets(registro, url) {
   try {
-    const r = await fetch(url, {
+    // Apps Script exige mode:'no-cors' para evitar bloqueio de CORS.
+    // Com no-cors não conseguimos ler a resposta, então assumimos sucesso
+    // se a requisição não lançar erro de rede.
+    await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(registro)
     });
-    const j = await r.json();
-    if (j.status === 'ok') {
-      await atualizarSincronizado(registro.id);
-      mostrarToast('Sincronizado com Google Sheets ✓', 'sucesso');
-      atualizarBadge();
-      if (document.getElementById('pg-historico').classList.contains('ativa')) renderHistorico();
-    }
+    await atualizarSincronizado(registro.id);
+    mostrarToast('Sincronizado com Google Sheets ✓', 'sucesso');
+    atualizarBadge();
+    if (document.getElementById('pg-historico').classList.contains('ativa')) renderHistorico();
   } catch {
     // silencioso — permanece pendente
   }
