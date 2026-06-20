@@ -1,0 +1,17 @@
+{
+  "name": "Controle de Processos",
+  "short_name": "Processos",
+  "description": "Registro de processos para servidor público federal",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1565C0",
+  "theme_color": "#1565C0",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='24' fill='%231565C0'/><text y='140' x='28' font-size='130' font-family='Arial'>📋</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1565C0" />
+  <meta name="description" content="Controle de Processos - Servidor Público Federal" />
+  <title>Controle de Processos</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      --azul: #1565C0;
+      --azul-escuro: #0D47A1;
+      --azul-claro: #E3F2FD;
+      --azul-medio: #42A5F5;
+      --branco: #FFFFFF;
+      --cinza: #F5F5F5;
+      --cinza-texto: #616161;
+      --verde: #2E7D32;
+      --vermelho: #C62828;
+      --amarelo: #F57F17;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--cinza);
+      color: #212121;
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--azul);
+      color: var(--branco);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    header span { font-size: 0.85rem; opacity: 0.85; }
+
+    #status-online {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #66BB6A;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    nav {
+      display: flex;
+      background: var(--azul-escuro);
+      overflow-x: auto;
+    }
+
+    nav button {
+      flex: 1;
+      min-width: 80px;
+      padding: 14px 10px;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    nav button.ativo {
+      color: var(--branco);
+      border-bottom-color: var(--azul-medio);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .pagina { display: none; padding: 16px; }
+    .pagina.ativa { display: block; }
+
+    .card {
+      background: var(--branco);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      color: var(--azul);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--azul-claro);
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--cinza-texto);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="date"],
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 14px 12px;
+      border: 2px solid #E0E0E0;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+      background: var(--branco);
+      color: #212121;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--azul);
+    }
+
+    textarea {
+      min-height: 160px;
+      resize: vertical;
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--cinza-texto);
+      margin-top: -12px;
+      margin-bottom: 16px;
+      padding-left: 4px;
+    }
+
+    .contador {
+      font-size: 0.9rem;
+      color: var(--azul);
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding: 10px;
+      background: var(--azul-claro);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primario {
+      background: var(--azul);
+      color: var(--branco);
+    }
+
+    .btn-primario:active { background: var(--azul-escuro); transform: scale(0.98); }
+    .btn-primario:disabled { background: #90CAF9; cursor: not-allowed; }
+
+    .btn-secundario {
+      background: var(--azul-claro);
+      color: var(--azul);
+      margin-top: 10px;
+    }
+
+    .btn-perigo {
+      background: #FFEBEE;
+      color: var(--vermelho);
+      margin-top: 10px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #323232;
+      color: var(--branco);
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      z-index: 1000;
+      transition: transform 0.3s;
+      max-width: 90vw;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .toast.visivel { transform: translateX(-50%) translateY(0); }
+    .toast.sucesso { background: var(--verde); }
+    .toast.erro { background: var(--vermelho); }
+    .toast.aviso { background: var(--amarelo); }
+
+    /* Histórico */
+    .item-historico {
+      background: var(--branco);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+      border-left: 4px solid var(--azul);
+    }
+
+    .item-historico.pendente { border-left-color: var(--amarelo); }
+    .item-historico.sincronizado { border-left-color: var(--verde); }
+
+    .item-historico .data { font-size: 0.8rem; color: var(--cinza-texto); margin-bottom: 6px; }
+    .item-historico .qtd { font-size: 1.1rem; font-weight: 700; color: var(--azul); margin-bottom: 6px; }
+    .item-historico .obs { font-size: 0.85rem; color: #424242; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .badge-verde { background: #E8F5E9; color: var(--verde); }
+    .badge-amarelo { background: #FFFDE7; color: var(--amarelo); }
+    .badge-cinza { background: #F5F5F5; color: #757575; }
+
+    /* Configurações */
+    .config-secao { margin-bottom: 20px; }
+
+    .info-box {
+      background: var(--azul-claro);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 0.88rem;
+      color: var(--azul-escuro);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #pendentes-badge {
+      background: var(--amarelo);
+      color: #212121;
+      border-radius: 50%;
+      width: 20px; height: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 4px;
+    }
+
+    @media (max-width: 360px) {
+      header h1 { font-size: 1rem; }
+      .btn { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📋 Controle de Processos</h1>
+    <span id="nome-usuario">Carregando...</span>
+  </div>
+  <div>
+    <span id="status-online"></span>
+  </div>
+</header>
+
+<nav>
+  <button class="ativo" onclick="mudarPagina('registrar', this)">Registrar</button>
+  <button onclick="mudarPagina('historico', this)">Histórico <span id="pendentes-badge" style="display:none">0</span></button>
+  <button onclick="mudarPagina('config', this)">Config</button>
+</nav>
+
+<!-- PÁGINA: REGISTRAR -->
+<div id="pg-registrar" class="pagina ativa">
+  <div class="card">
+    <h2>Novo Registro</h2>
+
+    <label for="data-trabalho">Data de Trabalho</label>
+    <input type="date" id="data-trabalho" />
+
+    <label for="processos">Números de Processo</label>
+    <textarea id="processos" placeholder="Cole ou digite os números&#10;Ex:&#10;12345.678901/2024-01&#10;98765.432109/2024-02&#10;00001.000001/2024-03"></textarea>
+    <p class="hint">Um processo por linha. Linhas em branco são ignoradas.</p>
+
+    <div class="contador" id="contador-processos">0 processo(s) detectado(s)</div>
+
+    <label for="observacoes">Observações</label>
+    <input type="text" id="observacoes" placeholder="Ex: Despachos do setor X, Análise de benefícios..." />
+
+    <button class="btn btn-primario" id="btn-enviar" onclick="enviarRegistro()">
+      Enviar Registro
+    </button>
+    <button class="btn btn-secundario" onclick="limparFormulario()">Limpar</button>
+  </div>
+</div>
+
+<!-- PÁGINA: HISTÓRICO -->
+<div id="pg-historico" class="pagina">
+  <div class="card">
+    <h2>Registros Locais</h2>
+    <div id="lista-historico">
+      <p style="color:var(--cinza-texto); text-align:center; padding:20px;">Nenhum registro ainda.</p>
+    </div>
+    <button class="btn btn-secundario" style="margin-top:10px" onclick="sincronizarPendentes()">
+      ↑ Tentar Enviar Pendentes
+    </button>
+    <button class="btn btn-perigo" onclick="confirmarLimparHistorico()">
+      🗑 Limpar Histórico Local
+    </button>
+  </div>
+</div>
+
+<!-- PÁGINA: CONFIG -->
+<div id="pg-config" class="pagina">
+  <div class="card">
+    <h2>Configurações</h2>
+
+    <div class="info-box">
+      Cole aqui a URL do Google Apps Script publicado como Web App. Ela começa com <strong>https://script.google.com/macros/s/...</strong>
+    </div>
+
+    <div class="config-secao">
+      <label for="cfg-url">URL do Google Apps Script</label>
+      <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/..." />
+    </div>
+
+    <div class="config-secao">
+      <label for="cfg-nome">Seu Nome / Matrícula</label>
+      <input type="text" id="cfg-nome" placeholder="Ex: João Silva / 1234567" />
+    </div>
+
+    <button class="btn btn-primario" onclick="salvarConfig()">Salvar Configurações</button>
+    <button class="btn btn-secundario" onclick="testarConexao()">Testar Conexão</button>
+  </div>
+
+  <div class="card">
+    <h2>Sobre</h2>
+    <p style="font-size:0.88rem; color:var(--cinza-texto); line-height:1.7">
+      Sistema de controle de processos para servidor público federal.<br>
+      Versão 1.0 — Funciona offline com sincronização automática.<br><br>
+      <strong>Dados pendentes</strong> ficam armazenados localmente e são enviados quando houver conexão.
+    </p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIGURAÇÃO E ESTADO
+// ============================================================
+const DB_NAME = 'processos_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'registros';
+let db = null;
+
+// ============================================================
+// INDEXEDDB
+// ============================================================
+function abrirDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE_NAME)) {
+        const store = d.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        store.createIndex('sincronizado', 'sincronizado', { unique: false });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function salvarLocal(registro) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(registro);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function listarTodos() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess = () => resolve(req.result.reverse());
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function listarPendentes() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const idx = tx.objectStore(STORE_NAME).index('sincronizado');
+    const req = idx.getAll(false);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function atualizarSincronizado(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get(id);
+    req.onsuccess = () => {
+      const reg = req.result;
+      if (reg) {
+        reg.sincronizado = true;
+        reg.dt_sinc = new Date().toISOString();
+        store.put(reg);
+      }
+      tx.oncomplete = () => resolve();
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function limparTodos() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ============================================================
+// CONFIG LOCAL
+// ============================================================
+function carregarConfig() {
+  const cfg = JSON.parse(localStorage.getItem('config_processos') || '{}');
+  document.getElementById('cfg-url').value = cfg.url || '';
+  document.getElementById('cfg-nome').value = cfg.nome || '';
+  document.getElementById('nome-usuario').textContent = cfg.nome || 'Usuário';
+  return cfg;
+}
+
+function salvarConfig() {
+  const cfg = {
+    url: document.getElementById('cfg-url').value.trim(),
+    nome: document.getElementById('cfg-nome').value.trim()
+  };
+  localStorage.setItem('config_processos', JSON.stringify(cfg));
+  document.getElementById('nome-usuario').textContent = cfg.nome || 'Usuário';
+  mostrarToast('Configurações salvas!', 'sucesso');
+}
+
+async function testarConexao() {
+  const cfg = JSON.parse(localStorage.getItem('config_processos') || '{}');
+  if (!cfg.url) { mostrarToast('Configure a URL primeiro.', 'erro'); return; }
+  mostrarToast('Testando conexão...', '');
+  try {
+    const r = await fetch(cfg.url + '?action=ping', { method: 'GET' });
+    const j = await r.json();
+    if (j.status === 'ok') mostrarToast('Conexão OK! ✓', 'sucesso');
+    else mostrarToast('Resposta inesperada do servidor.', 'aviso');
+  } catch {
+    mostrarToast('Falha na conexão. Verifique a URL.', 'erro');
+  }
+}
+
+// ============================================================
+// CONTADOR DE PROCESSOS
+// ============================================================
+document.getElementById('processos').addEventListener('input', function() {
+  const linhas = this.value.split('\n').filter(l => l.trim().length > 0);
+  document.getElementById('contador-processos').textContent = `${linhas.length} processo(s) detectado(s)`;
+});
+
+// ============================================================
+// DATA PADRÃO
+// ============================================================
+function setarDataHoje() {
+  const hoje = new Date();
+  const yyyy = hoje.getFullYear();
+  const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dd = String(hoje.getDate()).padStart(2, '0');
+  document.getElementById('data-trabalho').value = `${yyyy}-${mm}-${dd}`;
+}
+
+// ============================================================
+// ENVIAR REGISTRO
+// ============================================================
+async function enviarRegistro() {
+  const dataTrabalho = document.getElementById('data-trabalho').value;
+  const processosRaw = document.getElementById('processos').value;
+  const obs = document.getElementById('observacoes').value.trim();
+
+  if (!dataTrabalho) { mostrarToast('Informe a data de trabalho.', 'erro'); return; }
+
+  const lista = processosRaw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  if (lista.length === 0) { mostrarToast('Informe ao menos um processo.', 'erro'); return; }
+
+  const cfg = JSON.parse(localStorage.getItem('config_processos') || '{}');
+  if (!cfg.nome) { mostrarToast('Configure seu nome em Configurações.', 'aviso'); return; }
+
+  const registro = {
+    id: Date.now().toString(),
+    data_trabalho: dataTrabalho,
+    processos: lista.join('\n'),
+    qtd_processos: lista.length,
+    observacoes: obs,
+    usuario: cfg.nome,
+    dt_registro: new Date().toISOString(),
+    sincronizado: false,
+    dt_sinc: null
+  };
+
+  await salvarLocal(registro);
+  mostrarToast(`${lista.length} processo(s) salvo(s) localmente.`, 'sucesso');
+  limparFormulario();
+  atualizarBadge();
+
+  if (cfg.url && navigator.onLine) {
+    enviarParaSheets(registro, cfg.url);
+  }
+}
+
+async function enviarParaSheets(registro, url) {
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(registro)
+    });
+    const j = await r.json();
+    if (j.status === 'ok') {
+      await atualizarSincronizado(registro.id);
+      mostrarToast('Sincronizado com Google Sheets ✓', 'sucesso');
+      atualizarBadge();
+      if (document.getElementById('pg-historico').classList.contains('ativa')) renderHistorico();
+    }
+  } catch {
+    // silencioso — permanece pendente
+  }
+}
+
+// ============================================================
+// SINCRONIZAR PENDENTES
+// ============================================================
+async function sincronizarPendentes() {
+  const cfg = JSON.parse(localStorage.getItem('config_processos') || '{}');
+  if (!cfg.url) { mostrarToast('Configure a URL do Apps Script.', 'aviso'); return; }
+  if (!navigator.onLine) { mostrarToast('Sem conexão com a internet.', 'aviso'); return; }
+
+  const pendentes = await listarPendentes();
+  if (pendentes.length === 0) { mostrarToast('Nenhum registro pendente.', 'sucesso'); return; }
+
+  mostrarToast(`Enviando ${pendentes.length} registro(s)...`, '');
+  let ok = 0;
+  for (const reg of pendentes) {
+    try {
+      const r = await fetch(cfg.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reg)
+      });
+      const j = await r.json();
+      if (j.status === 'ok') { await atualizarSincronizado(reg.id); ok++; }
+    } catch {}
+  }
+  mostrarToast(`${ok}/${pendentes.length} sincronizado(s).`, ok > 0 ? 'sucesso' : 'erro');
+  atualizarBadge();
+  renderHistorico();
+}
+
+// ============================================================
+// HISTÓRICO
+// ============================================================
+async function renderHistorico() {
+  const lista = await listarTodos();
+  const el = document.getElementById('lista-historico');
+  if (lista.length === 0) {
+    el.innerHTML = '<p style="color:var(--cinza-texto); text-align:center; padding:20px;">Nenhum registro ainda.</p>';
+    return;
+  }
+  el.innerHTML = lista.map(r => {
+    const dataFmt = r.data_trabalho ? r.data_trabalho.split('-').reverse().join('/') : '—';
+    const dtReg = new Date(r.dt_registro).toLocaleString('pt-BR');
+    const badge = r.sincronizado
+      ? '<span class="badge badge-verde">✓ Sincronizado</span>'
+      : '<span class="badge badge-amarelo">⏳ Pendente</span>';
+    const processosList = r.processos.split('\n').slice(0, 3).join(', ');
+    const mais = r.qtd_processos > 3 ? ` +${r.qtd_processos - 3} mais` : '';
+    return `
+      <div class="item-historico ${r.sincronizado ? 'sincronizado' : 'pendente'}">
+        <div class="data">📅 Trabalho: ${dataFmt} — Registrado: ${dtReg}</div>
+        <div class="qtd">${r.qtd_processos} processo(s)</div>
+        <div class="obs">${processosList}${mais}</div>
+        ${r.observacoes ? `<div class="obs" style="margin-top:4px">📝 ${r.observacoes}</div>` : ''}
+        ${badge}
+      </div>`;
+  }).join('');
+}
+
+async function atualizarBadge() {
+  const pendentes = await listarPendentes();
+  const badge = document.getElementById('pendentes-badge');
+  if (pendentes.length > 0) {
+    badge.textContent = pendentes.length;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+async function confirmarLimparHistorico() {
+  if (confirm('Tem certeza que deseja apagar todo o histórico local? Esta ação não pode ser desfeita.')) {
+    await limparTodos();
+    renderHistorico();
+    atualizarBadge();
+    mostrarToast('Histórico limpo.', 'aviso');
+  }
+}
+
+// ============================================================
+// NAVEGAÇÃO
+// ============================================================
+function mudarPagina(nome, btn) {
+  document.querySelectorAll('.pagina').forEach(p => p.classList.remove('ativa'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('ativo'));
+  document.getElementById('pg-' + nome).classList.add('ativa');
+  btn.classList.add('ativo');
+  if (nome === 'historico') renderHistorico();
+  if (nome === 'config') carregarConfig();
+}
+
+// ============================================================
+// UTILIDADES
+// ============================================================
+function limparFormulario() {
+  document.getElementById('processos').value = '';
+  document.getElementById('observacoes').value = '';
+  document.getElementById('contador-processos').textContent = '0 processo(s) detectado(s)';
+  setarDataHoje();
+}
+
+let toastTimer = null;
+function mostrarToast(msg, tipo) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast visivel' + (tipo ? ' ' + tipo : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('visivel'); }, 3000);
+}
+
+// ============================================================
+// STATUS ONLINE
+// ============================================================
+function atualizarStatusOnline() {
+  const el = document.getElementById('status-online');
+  el.style.background = navigator.onLine ? '#66BB6A' : '#EF5350';
+  el.title = navigator.onLine ? 'Online' : 'Offline';
+}
+
+window.addEventListener('online', atualizarStatusOnline);
+window.addEventListener('offline', atualizarStatusOnline);
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  await abrirDB();
+  carregarConfig();
+  setarDataHoje();
+  atualizarStatusOnline();
+  atualizarBadge();
+
+  // Registrar Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+
+init();
+</script>
+</body>
+</html>
